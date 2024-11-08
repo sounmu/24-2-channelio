@@ -5,8 +5,8 @@ import os
 from pathlib import Path
 from . import util
 import json
+from contextlib import asynccontextmanager
 
-app = FastAPI()
 
 WAM_NAME = "wam_name"
 
@@ -31,9 +31,12 @@ async def function_handler(body: dict):
         )
         return {"result": {}}
 
-@app.on_event("startup")
-async def startup_event():
+@asynccontextmanager
+async def lifespan(app):
     await start_server()
+    yield
+
+app = FastAPI(lifespan=lifespan)
 
 @app.put("/functions")
 async def functions(request: Request):
@@ -51,8 +54,7 @@ async def functions(request: Request):
 wam_path = Path(__file__).parent.parent.parent / "wam" / "dist"
 if not wam_path.exists():
     print(f"Warning: WAM path does not exist: {wam_path}")
-    # 디렉토리가 없으면 생성
-    wam_path.mkdir(parents=True, exist_ok=True)
 
 print(f"WAM path: {wam_path}")
 app.mount(f"/resource/wam/{WAM_NAME}", StaticFiles(directory=str(wam_path)), name="wam") 
+# app.mount("/resource/wam/{WAM_NAME}", StaticFiles(directory="../../wam/dist"), name="static")
