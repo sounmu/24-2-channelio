@@ -7,9 +7,8 @@ require("dotenv").config();
 let channelTokenMap = new Map<string, [string, string, number]>();
 
 const tutorialMsg = "This is a test message sent by a manager.";
-const sendAsBotMsg = "This is a test message sent by a bot.";
 const helloMsg = "Hellooo";
-const botName = "Bot";
+const botName = "제곧내";
 const myName = "YOUNA";
 
 const defaultWamArgs = ["rootMessageId", "broadcast", "isPrivate"];
@@ -82,8 +81,23 @@ async function registerCommand(accessToken: string) {
                 {
                     name: "getGroupChat",
                     scope: "desk",
-                    description: "This is a summarize command",
+                    description: "This is a get Group Chat command",
                     actionFunctionName: "getGroupChat",
+                    alfMode: "disable",
+                    enabledByDefault: true,
+                }, {
+                    name: "getGroupChatByDate",
+                    scope: "desk",
+                    description: "This is a get Group Chat command In Some Period",
+                    actionFunctionName: "getGroupChatByDate",
+                    alfMode: "disable",
+                    enabledByDefault: true,
+                },
+                {
+                    name: "summarize",
+                    scope: "desk",
+                    description: "This is a summarize command",
+                    actionFunctionName: "summarize",
                     alfMode: "disable",
                     enabledByDefault: true,
                 }
@@ -103,7 +117,7 @@ async function registerCommand(accessToken: string) {
     }
 }
 
-async function sendAsBot(channelId: string, groupId: string, broadcast: boolean, rootMessageId?: string) {
+async function sendAsBot(sendAsBotMsg: string, channelId: string, groupId: string, broadcast: boolean, rootMessageId?: string) {
     const body = {
         method: "writeGroupMessage",
         params: {
