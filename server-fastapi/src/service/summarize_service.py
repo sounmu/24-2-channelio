@@ -17,7 +17,7 @@ async def service_summarize(
             detail="Request body is required"
         )
 
-    messages = request.messages
+    messages = request.data
     if not messages or len(messages) == 0:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
