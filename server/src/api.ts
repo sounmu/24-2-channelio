@@ -1,18 +1,7 @@
 import axios from 'axios';
-import * as crypto from 'crypto';
 import type { GroupChats, SummerizeApiRequest, Message } from './types';
 
 require("dotenv").config();
-
-let channelTokenMap = new Map<string, [string, string, number]>();
-
-const tutorialMsg = "This is a test message sent by a manager.";
-const sendAsBotMsg = "This is a test message sent by a bot.";
-const helloMsg = "Hellooo";
-const botName = "Bot";
-const myName = "YOUNA";
-
-const defaultWamArgs = ["rootMessageId", "broadcast", "isPrivate"];
 
 async function getGroupChat(groupId: string) {
 
@@ -26,8 +15,8 @@ async function getGroupChat(groupId: string) {
   };
 
   const headers = {
-    'x-access-key': '672e3225d9e028e83858',
-    'x-access-secret': "ed94bedcb865580d614728e436b4b2ed",
+    'x-access-key': process.env.API_ACCESS_KEY,
+    'x-access-secret': process.env.API_ACCESS_SECRET,
     'Content-Type': 'application/json',
   };
 
@@ -57,7 +46,6 @@ async function getGroupChat(groupId: string) {
       }
       return result;
     } else {
-      console.log('누구냐', response.data);
       throw new Error("response.data.message is not an array or is undefined.");
     }
   } catch (error) {
