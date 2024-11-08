@@ -40,12 +40,29 @@ async function requestIssueToken(channelId?: string): Promise<[string, string, n
     };
 
     const response = await axios.put(process.env.APPSTORE_URL ?? '', body, { headers });
-
+    console.log('response', response.data);
     const accessToken = response.data.result.accessToken;
     const refreshToken = response.data.result.refreshToken;
     const expiresAt = new Date().getTime() / 1000 + response.data.result.expiresIn - 5;
 
     return [accessToken, refreshToken, expiresAt];
+}
+
+async function refreshTokenRequest(channelId?: string): Promise<[string, string, number]> {
+    let body = {
+        method: 'refreshToken',
+        params: {
+            secret: process.env.APP_SECRET,
+            channelId: channelId
+        }
+    };
+
+    const response = await axios.put(process.env.APPSTORE_URL ?? '', body);
+    const accessToken = response.data.result.accessToken;
+    const new_refreshToken = response.data.result.refreshToken;
+    const expiresAt = new Date().getTime() / 1000 + response.data.result.expiresIn - 5;
+
+    return [accessToken, new_refreshToken, expiresAt];
 }
 
 async function registerCommand(accessToken: string) {
@@ -59,6 +76,14 @@ async function registerCommand(accessToken: string) {
                     scope: "desk",
                     description: "This is a desk command of App-tutorial",
                     actionFunctionName: "tutorial",
+                    alfMode: "disable",
+                    enabledByDefault: true,
+                },
+                {
+                    name: "getGroupChat",
+                    scope: "desk",
+                    description: "This is a summarize command",
+                    actionFunctionName: "getGroupChat",
                     alfMode: "disable",
                     enabledByDefault: true,
                 }
@@ -107,34 +132,42 @@ async function sendAsBot(channelId: string, groupId: string, broadcast: boolean,
     }
 }
 
-async function hello(channelId: string, groupId: string, broadcast: boolean, rootMessageId?: string) {
-    const body = {
-        method: "writeGroupMessage",
-        params: {
-            channelId: channelId,
-            groupId: groupId,
-            rootMessageId: rootMessageId,
-            broadcast: broadcast,
-            dto: {
-                plainText: helloMsg,
-                botName: myName
-            }
-        }
-    }
+async function hello(groupId: string) {
 
-    const channelToken = await getChannelToken(channelId);
+    // GET 요청 URL 생성
+    const url = `https://api.channel.io/open/v5/groups/${groupId}/messages`;
 
-    const headers = {
-        'x-access-token': channelToken[0],
-        'Content-Type': 'application/json'
+    // 쿼리 파라미터 생성
+    const params = {
+        // since: 2411080000, // 이 값을 실제로 설정해야 할 것으로 보입니다. 
+        limit: 100,
+        sortOrder: 'asc', // 'as' 값이 어떤 의미인지 확인 후 사용
     };
 
-    const response = await axios.put(process.env.APPSTORE_URL ?? '', body, { headers });
+    const headers = {
+        'x-access-key': '672e14424568d272813c',
+        'x-access-secret': "4dc86e44a6b9cd524f6bf2d183921d3f",
+        'Content-Type': 'application/json',
+    };
 
-    if (response.data.error != null) {
-        throw new Error("send as bot error");
+    try {
+        const response = await axios.get(url, {
+            params: params,  // URL 쿼리 파라미터 추가
+            headers: headers
+        });
+
+        // 에러 처리 (API 응답에 에러가 있는 경우)
+        if (response.data.error != null) {
+            throw new Error("User chat ERRORRRRR");
+        }
+        console.log('정신차려', response.data);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching data:", error);
+        throw new Error("Failed to fetch messages");
     }
 }
+
 
 function verification(x_signature: string, body: string): boolean {
     const key: crypto.KeyObject = crypto.createSecretKey(Buffer.from(process.env.SIGNING_KEY ?? '', 'hex'));
