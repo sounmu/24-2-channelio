@@ -6,3 +6,8 @@ export const CenterTextWrapper = styled.div`
   justify-content: center;
   gap: 2px;
 `
+
+export const RightButtonWrapper = styled.div`
+  display: flex;
+  justify-content: flex-end;
+`
