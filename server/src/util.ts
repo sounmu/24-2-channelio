@@ -16,19 +16,10 @@ const defaultWamArgs = ["rootMessageId", "broadcast", "isPrivate"];
 
 async function getChannelToken(channelId: string): Promise<[string, string]> {
     const channelToken = channelTokenMap.get(channelId);
-    console.log('chanelToken!!!!', channelToken);
     if (channelToken === undefined || channelToken[2] < new Date().getTime() / 1000) {
-        if (channelToken !== undefined) {
-            const [newAccessToken, newRefreshToken, newExpiresAt]: [string, string, number] = await refreshTokenRequest(channelId);
-            channelTokenMap.set(channelId, [newAccessToken, newRefreshToken, newExpiresAt]);
-            return [newAccessToken, newRefreshToken];
-        } else {
-            console.log('undefined!!!!!!!');
-            // 채널 토큰이 아예 없을 경우, 새로 발급
-            const [accessToken, refreshToken, expiresAt]: [string, string, number] = await requestIssueToken(channelId);
-            channelTokenMap.set(channelId, [accessToken, refreshToken, expiresAt]);
-            return [accessToken, refreshToken];
-        }
+        const [accessToken, refreshToken, expiresAt]: [string, string, number] = await requestIssueToken(channelId);
+        channelTokenMap.set(channelId, [accessToken, refreshToken, expiresAt]);
+        return [accessToken, refreshToken]
     }
     else {
         return [channelToken[0], channelToken[1]]
