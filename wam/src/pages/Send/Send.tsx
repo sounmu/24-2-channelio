@@ -1,33 +1,29 @@
-import {
-  useRef,
-  useState,
-  useEffect,
-  useMemo,
-  useCallback,
-  ChangeEvent,
-} from 'react'
+import { useRef, useState, useEffect, useMemo, useCallback } from 'react'
 import {
   VStack,
   HStack,
   Button,
   Text,
   Icon,
-  ButtonGroup,
+  RadioGroup,
+  Radio,
   TextField,
   TextFieldRef,
 } from '@channel.io/bezier-react'
 import { CancelIcon, SendIcon } from '@channel.io/bezier-icons'
-import {
-  callFunction,
-  callNativeFunction,
-  getWamData,
-  setSize,
-} from '../../utils/wam'
+import { callFunction, getWamData, setSize } from '../../utils/wam'
 import * as Styled from './Send.styled'
+
+enum Time {
+  day1 = '1',
+  day3 = '3',
+  day5 = '5',
+  day7 = '7',
+}
 
 function Send() {
   useEffect(() => {
-    setSize(390, 172)
+    setSize(390, 322)
   }, [])
 
   const chatTitle = useMemo(() => getWamData('chatTitle') ?? '', [])
@@ -45,7 +41,9 @@ function Send() {
   const inputRef = useRef<TextFieldRef | null>(null)
 
   const [option, setOption] = useState<number>(0)
-  const [selectedOption, setSelectedOption] = useState('1')
+  const [selectedOption, setSelectedOption] = useState<Time | undefined>(
+    Time.day1
+  )
   const [hasError, setHasError] = useState<boolean>(false)
 
   const handleChangeValue = useCallback(
@@ -64,9 +62,9 @@ function Send() {
     []
   )
 
-  const handleSelectChange = (e: ChangeEvent<HTMLSelectElement>) => {
-    setSelectedOption(e.target.value)
-  }
+  // const handleSelectChange = (e: ChangeEvent<HTMLSelectElement>) => {
+  //   setSelectedOption(e.target.value)
+  // }
 
   const getTimeStamp = useCallback(() => {
     const millisecondsInADay = 24 * 60 * 60 * 1000 // 하루의 밀리초
@@ -85,36 +83,6 @@ function Send() {
     async (sender: string): Promise<void> => {
       if (chatType === 'group') {
         switch (sender) {
-          case 'bot':
-            await callFunction(appId, 'sendAsBot', {
-              input: {
-                groupId: chatId,
-                broadcast,
-                rootMessageId,
-              },
-            })
-            break
-          case 'manager':
-            await callNativeFunction('writeGroupMessageAsManager', {
-              channelId,
-              groupId: chatId,
-              rootMessageId,
-              broadcast,
-              dto: {
-                plainText: message,
-                managerId,
-              },
-            })
-            break
-          case 'hello':
-            await callFunction(appId, 'hello', {
-              input: {
-                groupId: chatId,
-                broadcast,
-                rootMessageId,
-              },
-            })
-            break
           case 'summarizeN':
             await callFunction(appId, 'summarize', {
               input: {
@@ -126,6 +94,7 @@ function Send() {
             })
             break
           case 'summarizeD':
+            console.log(getTimeStamp()[0], getTimeStamp()[1])
             await callFunction(appId, 'summarize', {
               input: {
                 groupId: chatId,
@@ -178,24 +147,28 @@ function Send() {
         />
       </HStack>
       {option === 0 ? (
-        <HStack justify="center">
-          <ButtonGroup>
-            <Button
-              colorVariant="blue"
-              styleVariant="primary"
-              text="최신 N개 메시지 요약"
-              onClick={() => setOption(1)}
-            />
-            <Button
-              colorVariant="blue"
-              styleVariant="primary"
-              text="시작 일시부터 지금까지 메시지 요약"
-              onClick={() => setOption(2)}
-            />
-          </ButtonGroup>
-        </HStack>
+        <VStack
+          spacing={16}
+          justify="center"
+          align="center"
+        >
+          <Button
+            size="l"
+            colorVariant="blue"
+            styleVariant="primary"
+            text="최신 N개 메시지 요약"
+            onClick={() => setOption(1)}
+          />
+          <Button
+            size="l"
+            colorVariant="blue"
+            styleVariant="primary"
+            text="시작 일시부터 지금까지 메시지 요약"
+            onClick={() => setOption(2)}
+          />
+        </VStack>
       ) : option === 1 ? (
-        <HStack>
+        <HStack spacing={16}>
           <TextField
             ref={inputRef}
             value={inputNum}
@@ -218,31 +191,30 @@ function Send() {
           />
         </HStack>
       ) : option === 2 ? (
-        <HStack>
-          <select
+        <VStack>
+          <RadioGroup
+            direction="vertical"
+            onValueChange={setSelectedOption}
+            spacing={0}
             value={selectedOption}
-            onChange={handleSelectChange}
           >
-            <option
-              value="1"
-              selected
-            >
-              24시간 전
-            </option>
-            <option value="3">3일 전</option>
-            <option value="5">5일 전</option>
-            <option value="7">7일 전</option>
-          </select>
-          <Button
-            colorVariant="blue"
-            styleVariant="primary"
-            text="요약"
-            onClick={async () => {
-              await handleSend('summarizeD')
-              close()
-            }}
-          />
-        </HStack>
+            <Radio value={Time.day1}>24시간 전</Radio>
+            <Radio value={Time.day3}>3일 전</Radio>
+            <Radio value={Time.day5}>5일 전</Radio>
+            <Radio value={Time.day7}>7일 전</Radio>
+          </RadioGroup>
+          <Styled.RightButtonWrapper>
+            <Button
+              colorVariant="blue"
+              styleVariant="primary"
+              text="요약"
+              onClick={async () => {
+                await handleSend('summarizeD')
+                close()
+              }}
+            />
+          </Styled.RightButtonWrapper>
+        </VStack>
       ) : null}
       <HStack justify="center">
         <Styled.CenterTextWrapper>
