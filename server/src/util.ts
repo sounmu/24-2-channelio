@@ -89,10 +89,10 @@ async function registerCommand(accessToken: string) {
                     enabledByDefault: true,
                 },
                 {
-                    name: "summarize",
+                    name: "getGroupChat",
                     scope: "desk",
                     description: "This is a summarize command",
-                    actionFunctionName: "summarize",
+                    actionFunctionName: "getGroupChat",
                     alfMode: "disable",
                     enabledByDefault: true,
                 }

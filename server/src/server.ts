@@ -22,15 +22,8 @@ async function functionHandler(body: any) {
     const channelId = body.context.channel.id;
     console.log(body);
     switch (method) {
-        case 'summarize':
-            const groupChat: GroupChats[] = await getGroupChat(
-                body.params.input.groupId
-            );
-            const result: SummerizeApiRequest = {
-                data: groupChat,
-                count: groupChat.length,
-            }
-            return result;
+        case 'getGroupChat':
+            return getGroupChat(body.params.input.groupId);
         case 'tutorial':
             return tutorial(WAM_NAME, callerId, body.params);
         case 'sendAsBot':

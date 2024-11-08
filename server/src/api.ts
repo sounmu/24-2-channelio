@@ -51,7 +51,11 @@ async function getGroupChat(groupId: string) {
         }));
 
       console.log('제발제발요', groupChatsList);
-      return groupChatsList;
+      const result: SummerizeApiRequest = {
+        data: groupChatsList,
+        count: groupChatsList.length,
+      }
+      return result;
     } else {
       console.log('누구냐', response.data);
       throw new Error("response.data.message is not an array or is undefined.");
