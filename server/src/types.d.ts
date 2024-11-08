@@ -171,6 +171,7 @@ interface GroupChats {
 interface SummerizeApiRequest {
   data: GroupChats[];
   count: number;
+  user_id: string;
 }
 
 interface SummarizeApiResponse {

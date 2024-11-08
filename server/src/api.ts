@@ -4,7 +4,7 @@ import { response } from 'express';
 
 require("dotenv").config();
 
-async function getGroupChat(groupId: string) {
+async function getGroupChat(groupId: string, callerId: string) {
 
   // GET 요청 URL 생성
   const url = `https://api.channel.io/open/v5/groups/${groupId}/messages`;
@@ -38,12 +38,13 @@ async function getGroupChat(groupId: string) {
         .map((msg: Message) => ({
           personId: msg.personId,
           plainText: msg.plainText,
-        }));
+        })).reverse();
       // console.log(response.data.messages);
       console.log('제발제발요', groupChatsList);
       const result: SummerizeApiRequest = {
         data: groupChatsList,
         count: groupChatsList.length,
+        user_id: callerId
       }
       return result;
     } else {
@@ -56,17 +57,17 @@ async function getGroupChat(groupId: string) {
   }
 }
 
-async function getGroupChatByDate(groupId: string, start: number, end: number) {
+async function getGroupChatByDate(groupId: string, start: number, end: number, callerId: string) {
 
   // GET 요청 URL 생성
   const url = `https://api.channel.io/open/v5/groups/${groupId}/messages`;
 
   // 쿼리 파라미터 생성
   const params = {
-    since: String(start),
+    limit: 30,
     sortOrder: 'asc',
   };
-
+  console.log('This is timeee', String(start));
   const headers = {
     'x-access-key': process.env.API_ACCESS_KEY,
     'x-access-secret': process.env.API_ACCESS_SECRET,
@@ -87,6 +88,7 @@ async function getGroupChatByDate(groupId: string, start: number, end: number) {
     if (Array.isArray(response.data.messages)) {
       const groupChatsList: GroupChats[] = [];
       for (const msg of response.data.messages) {
+        if (msg.updatedAt<start) continue;
         if (msg.updatedAt >= end) break; // 조건에 부합하지 않으면 순회 종료
         if (msg.personType === 'manager' && msg.plainText !== undefined) {
           groupChatsList.push({
@@ -100,6 +102,7 @@ async function getGroupChatByDate(groupId: string, start: number, end: number) {
       const result: SummerizeApiRequest = {
         data: groupChatsList,
         count: groupChatsList.length,
+        user_id: callerId
       }
       return result;
     } else {
@@ -112,8 +115,8 @@ async function getGroupChatByDate(groupId: string, start: number, end: number) {
   }
 }
 
-async function summarize(groupId: string) {
-  const chatList: SummerizeApiRequest = await getGroupChat(groupId);
+async function summarize(groupId: string, callerId: string) {
+  const chatList: SummerizeApiRequest = await getGroupChat(groupId, callerId);
   const url = `http://127.0.0.1:8000/api/summarize`;
 
   try {

@@ -23,12 +23,11 @@ async function functionHandler(body: any) {
     console.log(body);
     switch (method) {
         case 'getGroupChat':
-            const result = await getGroupChat(body.params.chat.id);
-            return ({ result: { result } });
+            return getGroupChat(body.params.chat.id, callerId);
         case 'getGroupChatByDate':
-            return getGroupChatByDate(body.params.chat.id, 1731087275272, 1731088930)
+            return getGroupChatByDate(body.params.chat.id, 1731088926780, 1731093771501, callerId)
         case 'summarize':
-            const sendAsBotMsg = await summarize(body.params.chat.id);
+            const sendAsBotMsg = await summarize(body.params.chat.id, callerId);
             await sendAsBot(
                 sendAsBotMsg,
                 channelId,
