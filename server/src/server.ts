@@ -23,13 +23,13 @@ async function functionHandler(body: any) {
     console.log(body);
     switch (method) {
         case 'getGroupChat':
-            return getGroupChat(body.params.input.groupId);
+            return getGroupChat(body.params.chat.id);
         case 'tutorial':
             return tutorial(WAM_NAME, callerId, body.params);
         case 'sendAsBot':
             await sendAsBot(
                 channelId,
-                body.params.input.groupId,
+                body.params.chat.id,
                 body.params.input.broadcast,
                 body.params.input.rootMessageId
             );
