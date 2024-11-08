@@ -21,7 +21,7 @@ async function getGroupChat(groupId: string) {
 
   // 쿼리 파라미터 생성
   const params = {
-    limit: 3,
+    limit: 100,
     sortOrder: 'asc', // 'as' 값이 어떤 의미인지 확인 후 사용
   };
 
@@ -44,7 +44,7 @@ async function getGroupChat(groupId: string) {
 
     if (Array.isArray(response.data.messages)) {
       const groupChatsList: GroupChats[] = response.data.messages
-        .filter((msg: Message) => msg.personType === 'manager')  // personType이 'manager'인 메시지만 필터링
+        .filter((msg: Message) => msg.personType === 'manager' && msg.plainText !== undefined)  // personType이 'manager'이고 plainText가 정의된 메시지만 필터링
         .map((msg: Message) => ({
           personId: msg.personId,
           plainText: msg.plainText,
