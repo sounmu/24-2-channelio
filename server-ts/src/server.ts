@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express';
 import path from 'path';
-import { requestIssueToken, registerCommand, sendAsBot, tutorial, verification, hello } from './util2';
+import { requestIssueToken, registerCommand, sendAsBot, tutorial, verification, hello } from './util';
 
 
 require("dotenv").config();
