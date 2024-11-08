@@ -72,7 +72,7 @@ async def service_summarize(
                 {"role": "system", "content": "You are a helpful assistant that summarizes conversations."},
                 {"role": "user", "content": summarize_prompt}
             ],
-            max_tokens=150,
+            max_tokens=1000,
             temperature=0.5
         )
 
@@ -129,7 +129,7 @@ async def service_summarize(
         """
 
         # OpenAI API 호출 부분
-        completion2 = client.chat.completions.create(
+        """completion2 = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": "You are a helpful assistant that summarizes conversations."},
@@ -155,7 +155,9 @@ async def service_summarize(
         alarmized_text = message2_content.strip()
         # 테스트용 임시 코드
         # summarized_text = prompt
-        alarmized_json = parse_multiple_json(alarmized_text)
+        alarmized_json = parse_multiple_json(alarmized_text)"""
+
+        alarmized_json = [{"todo": "test", "reserved_time": "2024-11-09 15:00 KST"}]
 
         return SummarizeOutput(
             output=summarized_text,

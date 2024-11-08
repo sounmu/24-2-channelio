@@ -13,7 +13,7 @@ import {
 import { CancelIcon, SendIcon } from '@channel.io/bezier-icons'
 import { callFunction, getWamData, setSize } from '../../utils/wam'
 import * as Styled from './Send.styled'
-
+import { close } from '../../utils/wam'
 enum Time {
   day1 = '1',
   day3 = '3',
@@ -84,9 +84,12 @@ function Send() {
       if (chatType === 'group') {
         switch (sender) {
           case 'summarizeN':
-            await callFunction(appId, 'summarize', {
+            await callFunction(appId, 'getSummarize', {
+              chat: {
+                id: chatId,
+                type: chatType,
+              },
               input: {
-                groupId: chatId,
                 personId: managerId,
                 flag: 0,
                 mesgNum: inputNum,
@@ -95,9 +98,12 @@ function Send() {
             break
           case 'summarizeD':
             console.log(getTimeStamp()[0], getTimeStamp()[1])
-            await callFunction(appId, 'summarize', {
+            await callFunction(appId, 'getSummarize', {
+              chat: {
+                id: chatId,
+                type: chatType,
+              },
               input: {
-                groupId: chatId,
                 personId: managerId,
                 flag: 1,
                 startTime: getTimeStamp()[0],
