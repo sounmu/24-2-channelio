@@ -173,8 +173,12 @@ interface SummerizeApiRequest {
   count: number;
 }
 
+interface SummarizeApiResponse {
+  output: string;
+}
+
 export {
   MesgApiResponse,
   Message,
-  SummerizeApiRequest, GroupChats
+  SummerizeApiRequest, GroupChats, SummarizeApiResponse
 };
