@@ -26,8 +26,8 @@ async function getGroupChat(groupId: string) {
   };
 
   const headers = {
-    'x-access-key': '672e14424568d272813c',
-    'x-access-secret': "4dc86e44a6b9cd524f6bf2d183921d3f",
+    'x-access-key': '672e3225d9e028e83858',
+    'x-access-secret': "ed94bedcb865580d614728e436b4b2ed",
     'Content-Type': 'application/json',
   };
 
