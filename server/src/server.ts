@@ -22,7 +22,7 @@ async function functionHandler(body: any) {
     const channelId = body.context.channel.id;
     console.log(body);
     switch (method) {
-        case 'hello':
+        case 'summarize':
             const groupChat: GroupChats[] = await getGroupChat(
                 body.params.input.groupId
             );

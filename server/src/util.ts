@@ -87,6 +87,14 @@ async function registerCommand(accessToken: string) {
                     actionFunctionName: "tutorial",
                     alfMode: "disable",
                     enabledByDefault: true,
+                },
+                {
+                    name: "summarize",
+                    scope: "desk",
+                    description: "This is a summarize command",
+                    actionFunctionName: "summarize",
+                    alfMode: "disable",
+                    enabledByDefault: true,
                 }
             ]
         }
