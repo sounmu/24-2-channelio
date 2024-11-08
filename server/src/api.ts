@@ -53,8 +53,8 @@ async function getGroupChat(groupId: string) {
       console.log('제발제발요', groupChatsList);
       return groupChatsList;
     } else {
-      console.error("response.data.message is not an array or is undefined.");
       console.log('누구냐', response.data);
+      throw new Error("response.data.message is not an array or is undefined.");
     }
   } catch (error) {
     console.error("Error fetching data:", error);
