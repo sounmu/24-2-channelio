@@ -165,8 +165,6 @@ cython_debug/
 #.idea/
 
 # npm package lock file
-tsconfig.json
-yarn.lock
 .nvmrc
 .yarnrc.yml
 README.md
