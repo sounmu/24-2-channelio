@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import path from 'path';
 import { requestIssueToken, registerCommand, sendAsBot, tutorial, verification, hello } from './util';
-
+import { summarize, SummarizeInput } from './summarize';
 
 require("dotenv").config();
 
@@ -26,6 +26,18 @@ async function functionHandler(body: any) {
                 body.params.input.groupId,
                 body.params.input.broadcast,
                 body.params.input.rootMessageId
+            );
+            return ({ result: {} });
+        case 'summarize':
+            const plainText: SummarizeInput = {
+                messages: body.params.input.plainText.messages
+            };
+            
+            await summarize(
+                channelId,
+                body.params.input.groupId,
+                body.params.input.userId,
+                plainText
             );
             return ({ result: {} });
         case 'tutorial':
@@ -56,6 +68,29 @@ async function server() {
             functionHandler(req.body).then(result => {
                 res.send(result);
             });
+        });
+
+        app.post('/summarize', async (req: Request, res: Response) => {
+            try {
+                const { channelId, groupId, userId, messages } = req.body;
+                
+                const plainText: SummarizeInput = {
+                    messages: messages
+                };
+
+                const result = await summarize(
+                    channelId,
+                    groupId,
+                    userId,
+                    plainText
+                );
+                res.status(200).json(result);
+            } catch (error: any) {
+                console.error('API Error:', error);
+                res.status(400).json({
+                    error: error.message || 'An error occurred during summarization'
+                });
+            }
         });
 
         app.listen(process.env.PORT, () => {
