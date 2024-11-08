@@ -26,13 +26,14 @@ async function functionHandler(body: any) {
             return getGroupChat(body.params.chat.id);
         case 'summarize':
             const sendAsBotMsg = await summarize(body.params.chat.id);
-            return sendAsBot(
+            await sendAsBot(
                 sendAsBotMsg,
                 channelId,
                 body.params.chat.id,
                 body.params.input.broadcast,
                 body.params.input.rootMessageId
             );
+            return ({ result: {} });
         case 'tutorial':
             return tutorial(WAM_NAME, callerId, body.params);
     }

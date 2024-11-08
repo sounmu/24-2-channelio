@@ -1,5 +1,6 @@
 import axios from 'axios';
 import type { GroupChats, SummerizeApiRequest, Message, SummarizeApiResponse } from './types';
+import { response } from 'express';
 
 require("dotenv").config();
 
@@ -49,6 +50,7 @@ async function getGroupChat(groupId: string) {
       throw new Error("response.data.message is not an array or is undefined.");
     }
   } catch (error) {
+    console.log(response);
     console.error("Error fetching data:", error);
     throw new Error("Failed to fetch messages");
   }

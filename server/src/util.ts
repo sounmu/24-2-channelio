@@ -8,7 +8,7 @@ let channelTokenMap = new Map<string, [string, string, number]>();
 
 const tutorialMsg = "This is a test message sent by a manager.";
 const helloMsg = "Hellooo";
-const botName = "Bot";
+const botName = "제곧내";
 const myName = "YOUNA";
 
 const defaultWamArgs = ["rootMessageId", "broadcast", "isPrivate"];
