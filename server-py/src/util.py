@@ -1,35 +1,31 @@
-import httpx
+from typing import Tuple, Dict, Any
 import os
-import time
 import hmac
 import hashlib
 import base64
-import json
+import httpx
 from dotenv import load_dotenv
+from datetime import datetime
 
 load_dotenv()
 
-channel_token_map = {}
+channel_token_map: Dict[str, Tuple[str, str, float]] = {}
 
-tutorial_msg = "This is a test message sent by a manager."
-send_as_bot_msg = "This is a test message sent by a bot."
-hello_msg = "Hellooo"
-bot_name = "Bot"
-my_name = "YOUNA"
-default_wam_args = ["rootMessageId", "broadcast", "isPrivate"]
+TUTORIAL_MSG = "This is a test message sent by a manager."
+SEND_AS_BOT_MSG = "This is a test message sent by a bot."
+BOT_NAME = "Bot"
 
-async def get_channel_token(channel_id: str):
-    current_time = time.time()
-    channel_token = channel_token_map.get(channel_id)
+DEFAULT_WAM_ARGS = ["rootMessageId", "broadcast", "isPrivate"]
 
-    if channel_token is None or channel_token[2] < current_time:
+async def get_channel_token(channel_id: str) -> Tuple[str, str]:
+    if channel_id not in channel_token_map or channel_token_map[channel_id][2] < datetime.now().timestamp():
         access_token, refresh_token, expires_at = await request_issue_token(channel_id)
         channel_token_map[channel_id] = (access_token, refresh_token, expires_at)
         return access_token, refresh_token
     else:
-        return channel_token[0], channel_token[1]
+        return channel_token_map[channel_id][0], channel_token_map[channel_id][1]
 
-async def request_issue_token(channel_id: str = None):
+async def request_issue_token(channel_id: str = None) -> Tuple[str, str, float]:
     body = {
         "method": "issueToken",
         "params": {
@@ -38,13 +34,18 @@ async def request_issue_token(channel_id: str = None):
         }
     }
 
-    async with httpx.AsyncClient() as client:
-        response = await client.put(os.getenv("APPSTORE_URL", ""), json=body)
-        response_data = response.json()
+    headers = {
+        "Content-Type": "application/json"
+    }
 
-    access_token = response_data["result"]["accessToken"]
-    refresh_token = response_data["result"]["refreshToken"]
-    expires_at = time.time() + response_data["result"]["expiresIn"] - 5
+    async with httpx.AsyncClient() as client:
+        response = await client.put(os.getenv("APPSTORE_URL", ""), json=body, headers=headers)
+        data = response.json()
+
+    access_token = data["result"]["accessToken"]
+    refresh_token = data["result"]["refreshToken"]
+    expires_at = datetime.now().timestamp() + data["result"]["expiresIn"] - 5
+
     return access_token, refresh_token, expires_at
 
 async def register_command(access_token: str):
@@ -72,9 +73,9 @@ async def register_command(access_token: str):
 
     async with httpx.AsyncClient() as client:
         response = await client.put(os.getenv("APPSTORE_URL", ""), json=body, headers=headers)
-        response_data = response.json()
+        data = response.json()
 
-    if "error" in response_data:
+    if "error" in data and data["error"] is not None:
         raise Exception("register command error")
 
 async def send_as_bot(channel_id: str, group_id: str, broadcast: bool, root_message_id: str = None):
@@ -86,13 +87,14 @@ async def send_as_bot(channel_id: str, group_id: str, broadcast: bool, root_mess
             "rootMessageId": root_message_id,
             "broadcast": broadcast,
             "dto": {
-                "plainText": send_as_bot_msg,
-                "botName": bot_name
+                "plainText": SEND_AS_BOT_MSG,
+                "botName": BOT_NAME
             }
         }
     }
 
     access_token, _ = await get_channel_token(channel_id)
+
     headers = {
         "x-access-token": access_token,
         "Content-Type": "application/json"
@@ -100,69 +102,29 @@ async def send_as_bot(channel_id: str, group_id: str, broadcast: bool, root_mess
 
     async with httpx.AsyncClient() as client:
         response = await client.put(os.getenv("APPSTORE_URL", ""), json=body, headers=headers)
-        response_data = response.json()
+        data = response.json()
 
-    if "error" in response_data:
+    if "error" in data and data["error"] is not None:
         raise Exception("send as bot error")
 
-async def hello(channel_id: str, group_id: str, broadcast: bool, root_message_id: str = None):
-    body = {
-        "method": "writeGroupMessage",
-        "params": {
-            "channelId": channel_id,
-            "groupId": group_id,
-            "rootMessageId": root_message_id,
-            "broadcast": broadcast,
-            "dto": {
-                "plainText": hello_msg,
-                "botName": my_name
-            }
-        }
-    }
-
-    access_token, _ = await get_channel_token(channel_id)
-    headers = {
-        "x-access-token": access_token,
-        "Content-Type": "application/json"
-    }
-
-    async with httpx.AsyncClient() as client:
-        response = await client.put(os.getenv("APPSTORE_URL", ""), json=body, headers=headers)
-        response_data = response.json()
-
-    if "error" in response_data:
-        raise Exception("hello error")
-
-
-
-def verification(x_signature: str, body: dict) -> bool:
-    # SIGNING_KEY 가져오기
+def verify_signature(signature: str, body: str) -> bool:
     key = bytes.fromhex(os.getenv("SIGNING_KEY", ""))
-    
-    # JSON 직렬화 및 서명 생성
-    body_str = json.dumps(body, sort_keys=True)  # sort_keys=True로 키 순서 일관성 유지
-    mac = hmac.new(key, body_str.encode("utf-8"), hashlib.sha256)
-    
-    # URL-safe Base64 인코딩을 사용
-    signature = base64.urlsafe_b64encode(mac.digest()).decode()  # URL-safe Base64 인코딩
+    hmac_obj = hmac.new(key, body.encode('utf-8'), hashlib.sha256)
+    calculated_signature = base64.b64encode(hmac_obj.digest()).decode('utf-8')
+    return hmac.compare_digest(calculated_signature, signature)
 
-    print(f"Expected signature: {signature}")
-    print(f"Received x_signature: {x_signature}")
-
-    return signature == x_signature
-
-
-
-def tutorial(wam_name: str, caller_id: str, params: dict):
+def tutorial(wam_name: str, caller_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
     wam_args = {
-        "message": tutorial_msg,
+        "message": TUTORIAL_MSG,
         "managerId": caller_id,
     }
 
-    if "trigger" in params and "attributes" in params["trigger"]:
-        for k in default_wam_args:
-            if k in params["trigger"]["attributes"]:
-                wam_args[k] = params["trigger"]["attributes"][k]
+    if params and isinstance(params.get("trigger"), dict):
+        attributes = params["trigger"].get("attributes", {})
+        if isinstance(attributes, dict):
+            for k in DEFAULT_WAM_ARGS:
+                if k in attributes:
+                    wam_args[k] = attributes[k]
 
     return {
         "result": {
@@ -173,4 +135,4 @@ def tutorial(wam_name: str, caller_id: str, params: dict):
                 "wamArgs": wam_args,
             }
         }
-    }
+    } 

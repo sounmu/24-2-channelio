@@ -1,64 +1,58 @@
-from fastapi import FastAPI, Request, HTTPException, Header
-from pydantic import BaseModel
-from typing import Optional
+from fastapi import FastAPI, Request, HTTPException
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
 import os
+from pathlib import Path
+from . import util
 import json
-from dotenv import load_dotenv
-from src.util import request_issue_token, register_command, send_as_bot, tutorial, verification, hello
-
-load_dotenv()  # .env 파일의 환경 변수 로드
 
 app = FastAPI()
-WAM_NAME = 'wam_name'
 
-class BodyParams(BaseModel):
-    input: dict
-
-class BodyContext(BaseModel):
-    caller: dict
-    channel: dict
-
-class Body(BaseModel):
-    method: str
-    params: BodyParams
-    context: BodyContext
+WAM_NAME = "wam_name"
 
 async def start_server():
-    access_token, refresh_token, expires_at = await request_issue_token()
-    await register_command(access_token)
+    access_token, _, _ = await util.request_issue_token()
+    await util.register_command(access_token)
 
-async def function_handler(body: Body):
-    method = body.method
-    caller_id = body.context.caller['id']
-    channel_id = body.context.channel['id']
+async def function_handler(body: dict):
+    method = body.get("method")
+    caller_id = body.get("context", {}).get("caller", {}).get("id")
+    channel_id = body.get("context", {}).get("channel", {}).get("id")
 
-    if method == 'hello':
-        await hello(
+    if method == "tutorial":
+        return util.tutorial(WAM_NAME, caller_id, body.get("params", {}))
+    elif method == "sendAsBot":
+        params = body.get("params", {}).get("input", {})
+        await util.send_as_bot(
             channel_id,
-            body.params.input['groupId'],
-            body.params.input['broadcast'],
-            body.params.input['rootMessageId']
+            params.get("groupId"),
+            params.get("broadcast"),
+            params.get("rootMessageId")
         )
         return {"result": {}}
-    elif method == 'tutorial':
-        return tutorial(WAM_NAME, caller_id, body.params)
-    elif method == 'sendAsBot':
-        await send_as_bot(
-            channel_id,
-            body.params.input['groupId'],
-            body.params.input['broadcast'],
-            body.params.input['rootMessageId']
-        )
-        return {"result": {}}
-
-@app.put("/functions")
-async def functions(request: Request, x_signature: Optional[str] = Header(None)):
-    body = await request.json()
-    if not x_signature or not verification(x_signature, json.dumps(body)):
-        raise HTTPException(status_code=401, detail="Unauthorized")
-    result = await function_handler(Body(**body))
-    return result
 
 @app.on_event("startup")
-async def on_startup():
+async def startup_event():
     await start_server()
+
+@app.put("/functions")
+async def functions(request: Request):
+    body = await request.json()
+    body_str = json.dumps(body, separators=(',', ':'))
+    signature = request.headers.get("x-signature")
+    
+    if not signature or not util.verify_signature(signature, body_str):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    result = await function_handler(body)
+    return JSONResponse(content=result)
+
+# Static files for WAM
+wam_path = Path(__file__).parent.parent.parent / "wam" / "dist"
+if not wam_path.exists():
+    print(f"Warning: WAM path does not exist: {wam_path}")
+    # 디렉토리가 없으면 생성
+    wam_path.mkdir(parents=True, exist_ok=True)
+
+print(f"WAM path: {wam_path}")
+app.mount(f"/resource/wam/{WAM_NAME}", StaticFiles(directory=str(wam_path)), name="wam") 
