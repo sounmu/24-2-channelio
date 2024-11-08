@@ -85,6 +85,13 @@ async function registerCommand(accessToken: string) {
                     actionFunctionName: "getGroupChat",
                     alfMode: "disable",
                     enabledByDefault: true,
+                }, {
+                    name: "getGroupChatByDate",
+                    scope: "desk",
+                    description: "This is a get Group Chat command In Some Period",
+                    actionFunctionName: "getGroupChatByDate",
+                    alfMode: "disable",
+                    enabledByDefault: true,
                 },
                 {
                     name: "summarize",

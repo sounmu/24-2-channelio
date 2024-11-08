@@ -12,7 +12,59 @@ async function getGroupChat(groupId: string) {
   // 쿼리 파라미터 생성
   const params = {
     limit: 100,
-    sortOrder: 'asc', // 'as' 값이 어떤 의미인지 확인 후 사용
+    sortOrder: 'desc',
+  };
+
+  const headers = {
+    'x-access-key': process.env.API_ACCESS_KEY,
+    'x-access-secret': process.env.API_ACCESS_SECRET,
+    'Content-Type': 'application/json',
+  };
+
+  try {
+    const response = await axios.get(url, {
+      params: params,  // URL 쿼리 파라미터 추가
+      headers: headers
+    });
+
+    // 에러 처리 (API 응답에 에러가 있는 경우)
+    if (response.data.error != null) {
+      throw new Error("User chat ERRORRRRR");
+    }
+    console.log('responseeeeeeeeeeee: ', response.data);
+    if (Array.isArray(response.data.messages)) {
+      const groupChatsList: GroupChats[] = response.data.messages
+        .filter((msg: Message) => msg.personType === 'manager' && msg.plainText !== undefined)  // personType이 'manager'이고 plainText가 정의된 메시지만 필터링
+        .map((msg: Message) => ({
+          personId: msg.personId,
+          plainText: msg.plainText,
+        }));
+      // console.log(response.data.messages);
+      console.log('제발제발요', groupChatsList);
+      const result: SummerizeApiRequest = {
+        data: groupChatsList,
+        count: groupChatsList.length,
+      }
+      return result;
+    } else {
+      throw new Error("response.data.message is not an array or is undefined.");
+    }
+  } catch (error) {
+    console.log(response);
+    console.error("Error fetching data:", error);
+    throw new Error("Failed to fetch messages");
+  }
+}
+
+async function getGroupChatByDate(groupId: string, start: number, end: number) {
+
+  // GET 요청 URL 생성
+  const url = `https://api.channel.io/open/v5/groups/${groupId}/messages`;
+
+  // 쿼리 파라미터 생성
+  const params = {
+    since: String(start),
+    sortOrder: 'asc',
   };
 
   const headers = {
@@ -33,13 +85,17 @@ async function getGroupChat(groupId: string) {
     }
 
     if (Array.isArray(response.data.messages)) {
-      const groupChatsList: GroupChats[] = response.data.messages
-        .filter((msg: Message) => msg.personType === 'manager' && msg.plainText !== undefined)  // personType이 'manager'이고 plainText가 정의된 메시지만 필터링
-        .map((msg: Message) => ({
-          personId: msg.personId,
-          plainText: msg.plainText,
-        }));
-
+      const groupChatsList: GroupChats[] = [];
+      for (const msg of response.data.messages) {
+        if (msg.updatedAt >= end) break; // 조건에 부합하지 않으면 순회 종료
+        if (msg.personType === 'manager' && msg.plainText !== undefined) {
+          groupChatsList.push({
+            personId: msg.personId,
+            plainText: msg.plainText,
+          });
+        }
+      }
+      console.log(response.data.messages);
       console.log('제발제발요', groupChatsList);
       const result: SummerizeApiRequest = {
         data: groupChatsList,
@@ -71,4 +127,4 @@ async function summarize(groupId: string) {
 
 }
 
-export { getGroupChat, summarize };
+export { getGroupChat, summarize, getGroupChatByDate };
