@@ -1,4 +1,11 @@
-import { useState, useEffect, useMemo, useCallback, ChangeEvent } from 'react'
+import {
+  useRef,
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  ChangeEvent,
+} from 'react'
 import {
   VStack,
   HStack,
@@ -6,9 +13,10 @@ import {
   Text,
   Icon,
   ButtonGroup,
+  TextField,
+  TextFieldRef,
 } from '@channel.io/bezier-react'
 import { CancelIcon, SendIcon } from '@channel.io/bezier-icons'
-
 import {
   callFunction,
   callNativeFunction,
@@ -33,13 +41,38 @@ function Send() {
   const broadcast = useMemo(() => Boolean(getWamData('broadcast') ?? false), [])
   const rootMessageId = useMemo(() => getWamData('rootMessageId'), [])
 
-  const [option, setOption] = useState<number>(0)
-  const [inputNum, setinputNum] = useState('')
-  const [selectedOption, setSelectedOption] = useState('오늘')
+  // const { register, handleSubmit } = useForm<FormData>()
+  const [inputNum, setinputNum] = useState<number>(1)
+  const inputRef = useRef<TextFieldRef | null>(null)
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setinputNum(e.target.value)
-  }
+  /*   const onSubmit: SubmitHandler<FormData> = async () => {
+    console.log(inputNum)
+    setinputNum(inputNum)
+  
+  } */
+  const [option, setOption] = useState<number>(0)
+  const [selectedOption, setSelectedOption] = useState('오늘')
+  const [hasError, setHasError] = useState<boolean>(false)
+
+  // const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+  //   setinputNum(e.target.value)
+  // }
+
+  const handleChangeValue = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      if (
+        Number(event.currentTarget.value) < 1 ||
+        Number(event.currentTarget.value) > 30
+      ) {
+        setHasError(true)
+      } else {
+        setHasError(false)
+      }
+      setinputNum(Number(event.currentTarget.value))
+      event.preventDefault()
+    },
+    []
+  )
 
   const handleSelectChange = (e: ChangeEvent<HTMLSelectElement>) => {
     setSelectedOption(e.target.value)
@@ -62,6 +95,11 @@ function Send() {
     }
     return [startValue, endValue]
   }, [selectedOption])
+
+  const handleOnClick = async () => {
+    await handleSend('summarizeN')
+    close()
+  }
 
   const handleSend = useCallback(
     async (sender: string): Promise<void> => {
@@ -98,6 +136,7 @@ function Send() {
             })
             break
           case 'summarizeN':
+            console.log(inputNum)
             await callFunction(appId, 'summarize', {
               input: {
                 groupId: chatId,
@@ -108,6 +147,10 @@ function Send() {
             })
             break
           case 'summarizeD':
+            console.log(
+              getTimeStamp()[0].toLocaleString(),
+              getTimeStamp()[1].toLocaleString()
+            )
             await callFunction(appId, 'summarize', {
               input: {
                 groupId: chatId,
@@ -136,8 +179,8 @@ function Send() {
       chatType,
       managerId,
       message,
-      rootMessageId,
       inputNum,
+      rootMessageId,
       getTimeStamp,
     ]
   )
@@ -178,20 +221,25 @@ function Send() {
         </HStack>
       ) : option === 1 ? (
         <HStack>
-          <input
-            type="number"
+          <TextField
+            ref={inputRef}
             value={inputNum}
-            onChange={handleChange}
+            allowClear
+            autoFocus
             placeholder="숫자를 입력하세요"
+            size="m"
+            type="number"
+            variant="primary"
+            onChange={handleChangeValue}
+            hasError={hasError}
           />
           <Button
             colorVariant="blue"
             styleVariant="primary"
             text="요약"
-            onClick={async () => {
-              await handleSend('summarizeN')
-              close()
-            }}
+            type="submit"
+            onClick={handleOnClick}
+            disabled={hasError}
           />
         </HStack>
       ) : option === 2 ? (
