@@ -1,6 +1,8 @@
 import express, { Request, Response } from 'express';
 import path from 'path';
-import { requestIssueToken, registerCommand, sendAsBot, tutorial, verification, hello } from './util';
+import { requestIssueToken, registerCommand, sendAsBot, tutorial, verification } from './util';
+import { getGroupChat } from './api';
+import { GroupChats, SummerizeApiRequest } from './types';
 
 
 require("dotenv").config();
@@ -21,13 +23,14 @@ async function functionHandler(body: any) {
     console.log(body);
     switch (method) {
         case 'hello':
-            await hello(
-                channelId,
-                body.params.input.groupId,
-                body.params.input.broadcast,
-                body.params.input.rootMessageId
+            const groupChat: GroupChats[] = await getGroupChat(
+                body.params.input.groupId
             );
-            return ({ result: {} });
+            const result: SummerizeApiRequest = {
+                data: groupChat,
+                count: groupChat.length,
+            }
+            return result;
         case 'tutorial':
             return tutorial(WAM_NAME, callerId, body.params);
         case 'sendAsBot':
