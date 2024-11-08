@@ -159,8 +159,8 @@ async function hello(groupId: string) {
     };
 
     const headers = {
-        'x-access-key': '672e14424568d272813c',
-        'x-access-secret': "4dc86e44a6b9cd524f6bf2d183921d3f",
+        'x-access-key': process.env.API_ACCESS_KEY,
+        'x-access-secret' : process.env.API_ACCESS_SECRET,
         'Content-Type': 'application/json',
     };
 
