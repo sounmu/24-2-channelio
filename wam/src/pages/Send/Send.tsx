@@ -41,22 +41,12 @@ function Send() {
   const broadcast = useMemo(() => Boolean(getWamData('broadcast') ?? false), [])
   const rootMessageId = useMemo(() => getWamData('rootMessageId'), [])
 
-  // const { register, handleSubmit } = useForm<FormData>()
   const [inputNum, setinputNum] = useState<number>(1)
   const inputRef = useRef<TextFieldRef | null>(null)
 
-  /*   const onSubmit: SubmitHandler<FormData> = async () => {
-    console.log(inputNum)
-    setinputNum(inputNum)
-  
-  } */
   const [option, setOption] = useState<number>(0)
-  const [selectedOption, setSelectedOption] = useState('오늘')
+  const [selectedOption, setSelectedOption] = useState('1')
   const [hasError, setHasError] = useState<boolean>(false)
-
-  // const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-  //   setinputNum(e.target.value)
-  // }
 
   const handleChangeValue = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -81,18 +71,8 @@ function Send() {
   const getTimeStamp = useCallback(() => {
     const millisecondsInADay = 24 * 60 * 60 * 1000 // 하루의 밀리초
     const endValue = Date.now()
-    let startValue
-    if (selectedOption === '0') {
-      const now = new Date()
-      const startOfDay = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate()
-      ).getTime()
-      startValue = endValue - startOfDay
-    } else {
-      startValue = endValue - millisecondsInADay * Number(selectedOption)
-    }
+    const startValue = endValue - millisecondsInADay * Number(selectedOption)
+
     return [startValue, endValue]
   }, [selectedOption])
 
@@ -136,7 +116,6 @@ function Send() {
             })
             break
           case 'summarizeN':
-            console.log(inputNum)
             await callFunction(appId, 'summarize', {
               input: {
                 groupId: chatId,
@@ -147,10 +126,6 @@ function Send() {
             })
             break
           case 'summarizeD':
-            console.log(
-              getTimeStamp()[0].toLocaleString(),
-              getTimeStamp()[1].toLocaleString()
-            )
             await callFunction(appId, 'summarize', {
               input: {
                 groupId: chatId,
@@ -249,14 +224,14 @@ function Send() {
             onChange={handleSelectChange}
           >
             <option
-              value="0"
+              value="1"
               selected
             >
-              오늘
+              24시간 전
             </option>
-            <option value="3">3일</option>
-            <option value="5">5일</option>
-            <option value="7">7일</option>
+            <option value="3">3일 전</option>
+            <option value="5">5일 전</option>
+            <option value="7">7일 전</option>
           </select>
           <Button
             colorVariant="blue"
