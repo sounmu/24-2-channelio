@@ -54,6 +54,29 @@ async function server() {
             });
         });
 
+        app.post('/summarize', async (req: Request, res: Response) => {
+            try {
+                const { channelId, groupId, userId, messages } = req.body;
+
+                const plainText: SummarizeInput = {
+                    messages: messages
+                };
+
+                const result = await summarize(
+                    channelId,
+                    groupId,
+                    userId,
+                    plainText
+                );
+                res.status(200).json(result);
+            } catch (error: any) {
+                console.error('API Error:', error);
+                res.status(400).json({
+                    error: error.message || 'An error occurred during summarization'
+                });
+            }
+        });
+
         app.listen(process.env.PORT, () => {
             console.log(`Server is running at http://localhost:${process.env.PORT}`);
         });
